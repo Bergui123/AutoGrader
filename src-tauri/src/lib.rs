@@ -1,10 +1,13 @@
 //! Library crate: app construction so the logic stays unit-testable and the
 //! thin `main.rs` just calls `run()`.
 
+mod ai;
 mod commands;
 mod config;
 mod db;
 mod error;
+mod export;
+mod extract;
 mod gdpr;
 mod licensing;
 mod state;
@@ -23,6 +26,19 @@ pub fn run() {
     let conn = db::open().expect("failed to open local database");
     let app_state = AppState::new(conn, config.clone());
 
+    // DEV ONLY: inject a Gemini API key from the environment so the grading
+    // flow can be exercised locally without the production Cloud Function.
+    if let Some(key) = &config.dev_api_key {
+        use chrono::{Duration, Utc};
+        app_state.set_creds(crate::state::EphemeralCreds {
+            access_token: key.clone(),
+            expires_at: Utc::now() + Duration::days(3650),
+        });
+        if let Ok(conn) = app_state.db.lock() {
+            let _ = db::repo::config_set(&conn, "activated", "true");
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -37,14 +53,25 @@ pub fn run() {
             commands::run_heartbeat,
             commands::get_data_paths,
             commands::open_local_student_data,
+            commands::open_student_folder,
+            commands::detect_route,
+            commands::create_class,
+            commands::list_classes,
+            commands::delete_class,
             commands::create_student,
             commands::list_students,
+            commands::get_student,
+            commands::update_student_notes,
+            commands::delete_student,
             commands::create_assignment,
             commands::list_assignments,
             commands::create_submission,
-            commands::save_extraction,
+            commands::list_submissions,
+            commands::get_submission,
             commands::confirm_verified_text,
-            commands::save_grade_result,
+            commands::extract_submission,
+            commands::grade_submission,
+            commands::finalize_grade,
             commands::scrub_image,
             commands::scrub_text,
         ])

@@ -213,11 +213,10 @@ mod tests {
     fn cfg() -> AppConfig {
         AppConfig {
             license_endpoint: "https://example.test/lic".into(),
-            gcp_project: "p".into(),
-            gcp_location: "us".into(),
             model: "gemini-2.5-pro".into(),
             heartbeat_hours: 24,
             grace_days: 7,
+            dev_api_key: None,
         }
     }
 

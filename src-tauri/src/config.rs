@@ -8,13 +8,16 @@ use std::env;
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     /// Google Cloud Function that validates activation codes and emits
-    /// ephemeral AI credentials + heartbeat verdicts.
+    /// ephemeral AI credentials (the Gemini API key) + heartbeat verdicts.
     pub license_endpoint: String,
-    pub gcp_project: String,
-    pub gcp_location: String,
+    /// Gemini model id, e.g. `gemini-2.5-pro`.
     pub model: String,
     pub heartbeat_hours: i64,
     pub grace_days: i64,
+    /// DEV ONLY: if set, the app injects this Gemini API key into RAM creds at
+    /// boot and marks itself activated, so the full grading flow can be tested
+    /// locally without the production Cloud Function. Leave unset in prod.
+    pub dev_api_key: Option<String>,
 }
 
 fn var_or(key: &str, default: &str) -> String {
@@ -43,11 +46,13 @@ impl AppConfig {
                 // until a real endpoint is configured.
                 "https://localhost/__unconfigured_license_endpoint__",
             ),
-            gcp_project: var_or("AIGRADER_GCP_PROJECT", "unconfigured-project"),
-            gcp_location: var_or("AIGRADER_GCP_LOCATION", "us-central1"),
             model: var_or("AIGRADER_MODEL", "gemini-2.5-pro"),
             heartbeat_hours: num_or("AIGRADER_HEARTBEAT_HOURS", 24),
             grace_days: num_or("AIGRADER_GRACE_DAYS", 7),
+            dev_api_key: env::var("AIGRADER_DEV_API_KEY")
+                .ok()
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty()),
         }
     }
 

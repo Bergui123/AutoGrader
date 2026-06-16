@@ -4,7 +4,7 @@ import type { LicenseStatus } from "./lib/types";
 import ActivationGate from "./components/ActivationGate";
 import GraceBanner from "./components/GraceBanner";
 import LockScreen from "./components/LockScreen";
-import AppShell from "./components/AppShell";
+import Workspace from "./components/Workspace";
 
 type Boot =
   | { phase: "loading" }
@@ -50,13 +50,15 @@ export default function App() {
       return <LockScreen onRetry={refresh} />;
     case "grace":
       return (
-        <>
+        <div className="flex h-full flex-col">
           <GraceBanner daysLeft={status.days_left} onRetry={refresh} />
-          <AppShell status={status} />
-        </>
+          <div className="min-h-0 flex-1">
+            <Workspace status={status} />
+          </div>
+        </div>
       );
     case "active":
-      return <AppShell status={status} />;
+      return <Workspace status={status} />;
   }
 }
 

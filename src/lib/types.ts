@@ -1,5 +1,5 @@
 // TypeScript mirrors of the Rust domain models (src-tauri/src/db/models.rs)
-// and the licensing status enum (src-tauri/src/licensing.rs). Keep in sync.
+// and command outputs. Keep in sync with the backend.
 
 export type LicenseStatus =
   | { state: "unactivated" }
@@ -13,42 +13,84 @@ export interface DataPaths {
   db_path: string;
 }
 
+export interface Class {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
 export interface Student {
   id: number;
-  display_name: string;
-  external_ref: string | null;
+  class_id: number | null;
+  first_name: string;
+  last_name: string;
+  local_folder_path: string;
+  teacher_notes: string;
   created_at: string;
+}
+
+export function studentName(s: Student): string {
+  return `${s.first_name} ${s.last_name}`.trim();
 }
 
 export type EducationLevel = "Elementary" | "High School" | "University";
 
 export interface NewAssignment {
+  class_id: number | null;
   title: string;
   subject: string;
   education_level: EducationLevel | string;
-  custom_instructions?: string;
-  rubric?: string;
+  custom_persona?: string;
+  rubric_template?: string;
+  grading_prompt?: string;
   max_score?: number;
 }
 
-export interface Assignment extends Required<NewAssignment> {
+export interface Assignment {
   id: number;
+  class_id: number | null;
+  title: string;
+  subject: string;
+  education_level: string;
+  custom_persona: string;
+  rubric_template: string;
+  grading_prompt: string;
+  max_score: number;
   created_at: string;
 }
 
 export type SourceRoute = "image" | "digital";
+
+export interface RoutedFile {
+  path: string;
+  name: string;
+  route: SourceRoute;
+  mime?: string;
+}
+
+export interface RouteInfo {
+  route: SourceRoute | "unsupported";
+  mime_type: string;
+}
+
+export type SubmissionStatus = "ungraded" | "verified" | "graded";
 
 export interface Submission {
   id: number;
   assignment_id: number;
   student_id: number | null;
   source_route: SourceRoute;
-  original_path: string;
-  mime_type: string | null;
+  file_type: string;
+  status: SubmissionStatus;
+  extracted_markdown: string;
+  verified_markdown: string | null;
+  evaluation_json: string | null;
+  final_score: number | null;
+  local_output_path: string | null;
   created_at: string;
 }
 
-// The exact structured grading schema the AI must return (spec §Phase 4).
+// Structured grading schema (spec §Phase 4).
 export interface InlineCorrection {
   id?: number;
   location_reference: string;
@@ -67,13 +109,17 @@ export interface GradeResult {
   summary: GradeSummary;
 }
 
-export interface ScrubResult {
-  base64: string;
-  mime_type: string;
-  byte_len: number;
+export interface ExtractionOutput {
+  markdown: string;
+  route: SourceRoute;
 }
 
-// Dropzone auto-router (spec §5). Decides the pipeline from the extension.
+export interface FinalizeOutput {
+  final_score: number;
+  output_path: string | null;
+}
+
+// Fallback extension router (the backend detect_route is authoritative).
 const IMAGE_EXTS = ["jpg", "jpeg", "png", "heic", "pdf"];
 const DIGITAL_EXTS = ["docx", "xlsx", "pptx", "txt"];
 

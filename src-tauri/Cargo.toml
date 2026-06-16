@@ -35,6 +35,12 @@ chrono = { version = "0.4", features = ["serde"] }
 # GDPR pre-processing scrub: decode + re-encode drops EXIF/author metadata.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "bmp", "tiff"] }
 
+# Digital pipeline: native parsing of Office documents (no cloud involved).
+zip = { version = "2", default-features = false, features = ["deflate"] }   # .docx/.pptx containers
+quick-xml = "0.36"                                                          # .docx/.pptx XML
+calamine = "0.26"                                                           # .xlsx -> cell coordinates
+lopdf = "0.34"                                                             # .pdf metadata strip
+
 # Resolve the OS "Documents" dir for the local student data tree.
 dirs = "5"
 

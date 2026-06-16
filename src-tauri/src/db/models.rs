@@ -4,35 +4,55 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Class {
+    pub id: i64,
+    pub name: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Student {
     pub id: i64,
-    pub display_name: String,
-    pub external_ref: Option<String>,
+    pub class_id: Option<i64>,
+    pub first_name: String,
+    pub last_name: String,
+    pub local_folder_path: String,
+    pub teacher_notes: String,
     pub created_at: String,
+}
+
+impl Student {
+    pub fn full_name(&self) -> String {
+        format!("{} {}", self.first_name, self.last_name).trim().to_string()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Assignment {
     pub id: i64,
+    pub class_id: Option<i64>,
     pub title: String,
     pub subject: String,
     pub education_level: String,
-    pub custom_instructions: String,
-    pub rubric: String,
+    pub custom_persona: String,
+    pub rubric_template: String,
+    pub grading_prompt: String,
     pub max_score: f64,
     pub created_at: String,
 }
 
-/// Input payload for creating an assignment (no id / timestamp yet).
 #[derive(Debug, Clone, Deserialize)]
 pub struct NewAssignment {
+    pub class_id: Option<i64>,
     pub title: String,
     pub subject: String,
     pub education_level: String,
     #[serde(default)]
-    pub custom_instructions: String,
+    pub custom_persona: String,
     #[serde(default)]
-    pub rubric: String,
+    pub rubric_template: String,
+    #[serde(default)]
+    pub grading_prompt: String,
     #[serde(default = "default_max_score")]
     pub max_score: f64,
 }
@@ -47,8 +67,13 @@ pub struct Submission {
     pub assignment_id: i64,
     pub student_id: Option<i64>,
     pub source_route: String,
-    pub original_path: String,
-    pub mime_type: Option<String>,
+    pub file_type: String,
+    pub status: String,
+    pub extracted_markdown: String,
+    pub verified_markdown: Option<String>,
+    pub evaluation_json: Option<String>,
+    pub final_score: Option<f64>,
+    pub local_output_path: Option<String>,
     pub created_at: String,
 }
 
@@ -68,7 +93,7 @@ pub struct GradeSummary {
     pub final_score: f64,
 }
 
-/// The exact structured-output schema the grading engine must return.
+/// The exact structured-output schema the grading engine must return (§Phase 4).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GradeResult {
     pub inline_corrections: Vec<InlineCorrection>,
