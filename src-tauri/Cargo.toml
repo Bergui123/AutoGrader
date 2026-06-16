@@ -1,0 +1,51 @@
+[package]
+name = "aigrader"
+version = "0.1.0"
+description = "AI Teacher Grading desktop app"
+authors = ["AI Grader"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+# The desktop entrypoint links against this lib so logic stays unit-testable.
+name = "aigrader_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Local-first storage. `bundled` compiles SQLite in — no system dependency.
+rusqlite = { version = "0.32", features = ["bundled", "chrono"] }
+
+# Async runtime + HTTPS for the licensing gateway and Vertex AI.
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Timestamps for grace-period / heartbeat bookkeeping.
+chrono = { version = "0.4", features = ["serde"] }
+
+# GDPR pre-processing scrub: decode + re-encode drops EXIF/author metadata.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "bmp", "tiff"] }
+
+# Resolve the OS "Documents" dir for the local student data tree.
+dirs = "5"
+
+# Wipe ephemeral credentials from RAM on drop.
+zeroize = { version = "1", features = ["derive"] }
+
+thiserror = "1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
